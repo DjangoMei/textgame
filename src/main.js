@@ -4,7 +4,7 @@ const APP_CONFIG = {
 
 const APP_SETTINGS_PATH = "./config/app-config.md";
 const DEFAULT_APP_SETTINGS = {
-  hideConnection: false,
+  hideConnection: true,
   defaultProviderId: "volcengine",
   defaultModel: "ep-20260522175712-qq28w"
 };

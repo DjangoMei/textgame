@@ -2,7 +2,7 @@
 
 # 是否隐藏界面左侧的整个“连接”区域。
 # 可选值：true / false
-hideConnection: false
+hideConnection: true
 
 # 默认服务商。
 # 可选值：volcengine / siliconflow
