@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.log
+.env
+.env.*
+!.env.example
+data/
+*.zip
+.cache/
+coverage/
+internal-eval/recovery/

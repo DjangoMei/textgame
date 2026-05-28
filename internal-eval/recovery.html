@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>LocalStorage Recovery</title>
+</head>
+<body>
+  <pre id="output"></pre>
+  <script>
+    const key = "endless-story-internal-annotations-v1";
+    const value = localStorage.getItem(key);
+    const output = document.getElementById("output");
+    if (!value) {
+      output.textContent = JSON.stringify({ found: false }, null, 2);
+    } else {
+      try {
+        const parsed = JSON.parse(value);
+        const cases = Array.isArray(parsed.cases) ? parsed.cases : [];
+        const reviewed = cases.filter(item => item && item.label && item.label.reviewed);
+        const manual = reviewed.filter(item => {
+          const label = item.label || {};
+          return !label.autoCompletedBy
+            && !label.autoCompletedRevision
+            && !["Codex", "Codex补标"].includes(String(label.annotator || ""));
+        });
+        output.textContent = JSON.stringify({
+          found: true,
+          length: value.length,
+          cases: cases.length,
+          reviewed: reviewed.length,
+          manual: manual.length,
+          manualIds: manual.map(item => item.id),
+          value
+        }, null, 2);
+      } catch (error) {
+        output.textContent = JSON.stringify({ found: true, parseError: error.message, value }, null, 2);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "endless-story-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.mjs",
+    "start": "node server.mjs",
+    "package:itch": "powershell -ExecutionPolicy Bypass -File scripts/package-itch.ps1"
+  }
+}

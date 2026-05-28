@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>无尽故事实验室</title>
+  <link rel="stylesheet" href="./src/styles.css" />
+</head>
+<body>
+  <section id="modeScreen" class="mode-screen" aria-labelledby="modeTitle">
+    <div class="mode-panel">
+      <p class="eyebrow">Bad Ending Rescue</p>
+      <h1 id="modeTitle">无尽故事实验室</h1>
+      <p class="mode-lead">进入故事裂隙，改写一句关键台词，把注定坠落的结局拉回光里。</p>
+      <div class="mode-choice-grid">
+        <button id="chooseExperienceBtn" class="mode-choice" type="button">
+          <strong>体验模式</strong>
+          <span>自由选择世界与主题，无限次尝试改写台词，练习把坏结局扭转成好结局。</span>
+        </button>
+        <button id="chooseChallengeBtn" class="mode-choice challenge" type="button">
+          <strong>闯关模式</strong>
+          <span>随机剧本连续挑战，5 点能量守住命运线，尽可能拿下更多好结局。</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div id="appShell" class="app-shell" hidden>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Bad Ending Rescue</p>
+        <h1>无尽故事实验室</h1>
+      </div>
+      <button id="backToModeBtn" class="button ghost topbar-back" type="button">返回模式选择</button>
+      <div class="topbar-intro" aria-label="玩法介绍">
+        <p>选择世界观、故事主题和核心意象，开启一段注定滑向坏结局的剧本。</p>
+        <p>找到被标记的关键台词，用你的改写撬动后续命运。</p>
+        <p>好结局才算真正通关；坏结局与中立结局都还需要继续尝试。</p>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="control-pane">
+        <section class="pane-section">
+          <h2>连接</h2>
+          <label class="field">
+            <span>服务商</span>
+            <select id="providerSelect">
+              <option value="siliconflow">SiliconFlow</option>
+              <option value="volcengine" selected>火山方舟</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span id="apiKeyLabel">火山方舟 API Key</span>
+            <input id="apiKeyInput" type="password" autocomplete="off" placeholder="ARK_API_KEY" />
+          </label>
+
+          <div class="split-fields">
+            <label class="field">
+              <span>模型 / Endpoint ID</span>
+              <input id="modelInput" type="text" value="MiniMaxAI/MiniMax-M2.5" />
+            </label>
+            <button id="toggleKeyBtn" class="button ghost" type="button">显示 Key</button>
+          </div>
+
+          <p id="providerHint" class="note">Key 只用于当前本地会话，不会写入项目文件。</p>
+        </section>
+
+        <section id="storySettingsSection" class="pane-section">
+          <div class="section-title-row">
+            <h2>故事设定</h2>
+          </div>
+          <label class="field">
+            <span>世界观</span>
+            <select id="worldviewSelect">
+              <option value="modern-urban">现代都市</option>
+              <option value="ancient-history">古代历史</option>
+              <option value="oriental-wuxia">东方武侠</option>
+              <option value="oriental-fantasy">东方奇幻</option>
+              <option value="sword-magic">剑与魔法</option>
+              <option value="near-future">近未来科幻</option>
+              <option value="space-sci-fi">太空科幻</option>
+              <option value="post-apocalypse">废土末世</option>
+              <option value="steampunk">蒸汽朋克</option>
+              <option value="mythic-legend">神话传说</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>故事主题</span>
+            <select id="storyThemeSelect">
+              <option value="suspense">悬疑</option>
+              <option value="romance">爱情</option>
+              <option value="power">权谋</option>
+              <option value="crime">犯罪</option>
+              <option value="adventure">冒险</option>
+              <option value="survival">生存</option>
+              <option value="family">亲情</option>
+              <option value="revenge">复仇</option>
+              <option value="war">战争</option>
+              <option value="heist">盗取潜入</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>核心要素 / 意象（可选）</span>
+            <input id="motifInput" type="text" maxlength="40" placeholder="例如：断裂罗盘、海底列车、会说谎的药瓶" />
+          </label>
+          <p class="note">不填写时，会自动随机生成一个核心意象。</p>
+        </section>
+        <section id="progressPanel" class="progress-panel" aria-live="polite" hidden>
+          <div class="progress-head">
+            <div>
+              <span class="progress-kicker">生成进度</span>
+              <strong id="progressTitle">准备中</strong>
+            </div>
+            <span id="progressElapsed">0.0 秒</span>
+          </div>
+          <div class="progress-track" aria-hidden="true">
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+          <div class="progress-meta">
+            <span id="progressCurrent">等待开始</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <ol id="progressSteps" class="progress-steps"></ol>
+        </section>
+      </aside>
+
+      <section class="story-pane">
+        <section id="challengeStatus" class="challenge-status" hidden>
+          <div class="challenge-card">
+            <img class="challenge-icon" src="./assets/icons/challenge-energy.png" alt="" aria-hidden="true" />
+            <span>能量</span>
+            <strong id="energyCount">5</strong>
+            <small>/ 5</small>
+          </div>
+          <div class="challenge-card">
+            <img class="challenge-icon" src="./assets/icons/challenge-good-ending.png" alt="" aria-hidden="true" />
+            <span>好结局</span>
+            <strong id="goodEndingCount">0</strong>
+          </div>
+          <p id="challengeHint" class="challenge-hint">点击“开始闯关”后，将随机生成世界观、故事主题和核心要素。</p>
+        </section>
+
+        <div class="button-row story-actions">
+          <button id="generateBtn" class="button primary game-cta" type="button">AI 生成新故事</button>
+          <button id="challengeStartBtn" class="button primary game-cta" type="button" hidden>开始闯关</button>
+          <button id="nextLevelBtn" class="button secondary" type="button" hidden disabled>下一关</button>
+          <div id="loading" class="loading action-loading" aria-live="polite">
+            <span class="spinner"></span>
+            <span id="loadingText">AI 正在写作...</span>
+            <div class="action-progress-track" aria-hidden="true">
+              <div id="actionProgressFill" class="action-progress-fill"></div>
+            </div>
+          </div>
+          <button id="demoBtn" class="button secondary" type="button">载入示例</button>
+          <button id="finishBtn" class="button secondary" type="button" disabled>结束改写</button>
+          <button id="resetBtn" class="button ghost" type="button" disabled>重置故事</button>
+        </div>
+
+        <article class="story-board" aria-live="polite">
+          <div class="story-heading">
+            <div>
+              <span>当前故事</span>
+              <strong id="storyTitle">尚未生成</strong>
+            </div>
+            <span id="charCount" class="story-count">0 字</span>
+          </div>
+          <div id="story" class="story-text">
+            <p class="empty-story">选择世界观和故事主题，填写或留空核心要素，然后生成新故事。</p>
+          </div>
+          <div id="outcomeNotice" class="outcome-notice bad" hidden>
+            <strong id="outcomeNoticeTitle">坏结局</strong>
+            <span id="outcomeNoticeText">你的目标是改写特殊情节，把坏结局变成好结局。</span>
+          </div>
+        </article>
+
+        <div id="errorBox" class="error"></div>
+
+        <section class="history">
+          <h2>改写记录</h2>
+          <ol id="logList">
+            <li>还没有改写。</li>
+          </ol>
+        </section>
+
+        <section id="endingPanel" class="ending">
+          <h2 id="finalTitle">最终故事</h2>
+          <p id="finalStory" class="final-story"></p>
+          <p id="endingText" class="ending-note"></p>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div id="modalMask" class="modal-mask" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <h2 id="modalTitle">选择替换内容</h2>
+      <p id="modalDesc"></p>
+      <div id="optionList" class="option-list"></div>
+      <div class="button-row">
+        <button id="applyBtn" class="button primary" type="button">确认替换</button>
+        <button id="cancelBtn" class="button ghost" type="button">取消</button>
+      </div>
+      <p id="modalWarning" class="warning"></p>
+    </div>
+  </div>
+
+  <script src="./src/config.js?v=20260525-image-ui"></script>
+  <script type="module" src="./src/main.js?v=20260525-image-ui"></script>
+</body>
+</html>

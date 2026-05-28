@@ -1,0 +1,31 @@
+{
+  "batches": [
+    {
+      "batchId": "volcengine-2026-05-27T06-33-46-484Z",
+      "label": "爱情 v2",
+      "path": "./generated/volcengine-2026-05-27T06-33-46-484Z.json",
+      "count": 20,
+      "generatedAt": "2026-05-27T06:37:58.158Z",
+      "promptRevision": "story-romance-v2",
+      "labelRevision": "codex-batch-label-v4-setting-fit"
+    },
+    {
+      "batchId": "volcengine-2026-05-27T06-38-18-752Z",
+      "label": "PE v6",
+      "path": "./generated/volcengine-2026-05-27T06-38-18-752Z.json",
+      "count": 20,
+      "generatedAt": "2026-05-27T06:41:58.231Z",
+      "promptRevision": "story-keywords-v6",
+      "labelRevision": "codex-batch-label-v4-setting-fit"
+    },
+    {
+      "batchId": "volcengine-2026-05-27T07-18-30-028Z",
+      "label": "爱情 v3",
+      "path": "./generated/volcengine-2026-05-27T07-18-30-028Z.json",
+      "count": 20,
+      "generatedAt": "2026-05-27T07:22:54.921Z",
+      "promptRevision": "story-romance-v3",
+      "labelRevision": "codex-batch-label-v4-setting-fit"
+    }
+  ]
+}

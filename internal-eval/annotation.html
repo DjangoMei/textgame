@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>内部评测标注台</title>
+  <link rel="stylesheet" href="./annotation.css" />
+</head>
+<body>
+  <main class="eval-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Internal Evaluation</p>
+        <h1>故事原文评测台</h1>
+      </div>
+      <div class="topbar-actions">
+        <label class="file-button">
+          <input id="importInput" type="file" accept=".json,.jsonl,application/json" />
+          导入样本
+        </label>
+        <button id="exportJsonlBtn" class="button secondary" type="button">导出 JSONL</button>
+        <button id="exportJsonBtn" class="button secondary" type="button">导出 JSON</button>
+      </div>
+    </header>
+
+    <section class="status-row" aria-live="polite">
+      <div>
+        <span>样本</span>
+        <strong id="caseCount">0</strong>
+      </div>
+      <div>
+        <span>已评测</span>
+        <strong id="labeledCount">0</strong>
+      </div>
+      <div>
+        <span>当前</span>
+        <strong id="currentCaseLabel">-</strong>
+      </div>
+      <p id="saveState">本地未保存</p>
+    </section>
+
+    <nav id="batchTabs" class="batch-tabs" aria-label="样本批次"></nav>
+    <nav id="standardTabs" class="standard-tabs" aria-label="评测标准视图"></nav>
+    <section id="statsPanel" class="stats-panel" aria-live="polite"></section>
+
+    <section class="workspace">
+      <aside class="case-list-panel">
+        <div class="panel-title">
+          <h2>样本队列</h2>
+          <button id="newCaseBtn" class="button ghost" type="button">新建</button>
+        </div>
+        <div id="caseList" class="case-list"></div>
+      </aside>
+
+      <section class="case-panel">
+        <div class="case-toolbar">
+          <button id="prevBtn" class="button ghost" type="button">上一条</button>
+          <button id="nextBtn" class="button ghost" type="button">下一条</button>
+          <button id="deleteCaseBtn" class="button danger" type="button">删除样本</button>
+        </div>
+
+        <div class="case-grid">
+          <section class="case-editor">
+            <h2>样本内容</h2>
+            <div class="meta-grid">
+              <label class="field">
+                <span>标题</span>
+                <input id="titleInput" type="text" autocomplete="off" />
+              </label>
+              <label class="field">
+                <span>世界观</span>
+                <input id="worldviewInput" type="text" autocomplete="off" />
+              </label>
+              <label class="field">
+                <span>主题</span>
+                <input id="themeInput" type="text" autocomplete="off" />
+              </label>
+            </div>
+
+            <label class="field">
+              <span>返回原文</span>
+              <textarea id="storyTextInput" rows="22"></textarea>
+            </label>
+          </section>
+
+          <section class="label-editor">
+            <section class="human-review-block">
+              <h2>人工标注</h2>
+
+              <fieldset class="flag-group">
+                <legend>问题标记</legend>
+                <label><input id="flagFormat" type="checkbox" /> 格式错误</label>
+                <label><input id="flagCorrupt" type="checkbox" /> 乱码/截断/重复</label>
+                <label><input id="flagPromptMismatch" type="checkbox" /> 内容跑题</label>
+                <label><input id="flagLengthIssue" type="checkbox" /> 长度异常</label>
+                <label><input id="flagUnsafe" type="checkbox" /> 不适合发布</label>
+              </fieldset>
+
+              <div class="score-grid">
+                <label class="score-field">
+                  <span>逻辑完整</span>
+                  <input id="scoreLogic" type="range" min="1" max="5" step="1" />
+                  <output id="scoreLogicOut"></output>
+                </label>
+                <label class="score-field">
+                  <span>情感有效</span>
+                  <input id="scoreEmotion" type="range" min="1" max="5" step="1" />
+                  <output id="scoreEmotionOut"></output>
+                </label>
+                <label class="score-field">
+                  <span>文笔质感</span>
+                  <input id="scoreProse" type="range" min="1" max="5" step="1" />
+                  <output id="scoreProseOut"></output>
+                </label>
+                <label class="score-field">
+                  <span>故事张力</span>
+                  <input id="scoreTension" type="range" min="1" max="5" step="1" />
+                  <output id="scoreTensionOut"></output>
+                </label>
+              </div>
+
+              <label class="field">
+                <span>标注人</span>
+                <input id="annotatorInput" type="text" autocomplete="off" />
+              </label>
+              <label class="field">
+                <span>备注</span>
+                <textarea id="notesInput" rows="8"></textarea>
+              </label>
+              <button id="markDoneBtn" class="button primary" type="button">保存人工标注并下一条</button>
+            </section>
+
+            <section class="codex-review-block">
+              <h2>Codex 自动评测</h2>
+              <div id="codexReviewPanel" class="codex-review-panel"></div>
+            </section>
+          </section>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <dialog id="pasteDialog" class="paste-dialog">
+    <form method="dialog">
+      <h2>新建样本</h2>
+      <label class="field">
+        <span>粘贴 JSON 或故事正文</span>
+        <textarea id="pasteInput" rows="12"></textarea>
+      </label>
+      <div class="dialog-actions">
+        <button id="cancelPasteBtn" class="button ghost" value="cancel" type="submit">取消</button>
+        <button id="confirmPasteBtn" class="button primary" value="default" type="button">创建</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="./annotation.js?v=20260527-human-labels" defer></script>
+</body>
+</html>
