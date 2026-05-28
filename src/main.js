@@ -1,36 +1,28 @@
 const APP_CONFIG = {
-  llmProxyUrl: normalizeConfigUrl(globalThis.ENDLESS_STORY_CONFIG?.llmProxyUrl),
-  managedApiKeys: Boolean(globalThis.ENDLESS_STORY_CONFIG?.managedApiKeys)
+  llmProxyUrl: normalizeConfigUrl(globalThis.ENDLESS_STORY_CONFIG?.llmProxyUrl)
 };
 
 const APP_SETTINGS_PATH = "./config/app-config.md";
 const DEFAULT_APP_SETTINGS = {
   hideConnection: false,
   defaultProviderId: "volcengine",
-  defaultModel: "ep-20260522175712-qq28w",
-  defaultApiKey: ""
+  defaultModel: "ep-20260522175712-qq28w"
 };
 
 const PROVIDERS = {
   siliconflow: {
     id: "siliconflow",
     name: "SiliconFlow",
-    apiKeyLabel: "SiliconFlow API Key",
-    apiKeyPlaceholder: "sk-...",
     defaultModel: "MiniMaxAI/MiniMax-M2.5",
     modelPlaceholder: "MiniMaxAI/MiniMax-M2.5",
-    chatUrl: "https://api.siliconflow.cn/v1/chat/completions",
-    note: "使用 SiliconFlow 的 OpenAI 兼容接口。"
+    note: "通过后端代理调用 SiliconFlow 的 OpenAI 兼容接口。"
   },
   volcengine: {
     id: "volcengine",
     name: "火山方舟",
-    apiKeyLabel: "火山方舟 API Key",
-    apiKeyPlaceholder: "ARK_API_KEY",
     defaultModel: "ep-20260522175712-qq28w",
     modelPlaceholder: "ep-20260522175712-qq28w / Model ID",
-    chatUrl: "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
-    note: "使用火山方舟 OpenAI 兼容接口；模型可填 Model ID 或推理接入点 ID。"
+    note: "通过后端代理调用火山方舟 OpenAI 兼容接口；模型可填 Model ID 或推理接入点 ID。"
   }
 };
 const MODEL_ALIASES = {
@@ -342,10 +334,7 @@ const chooseExperienceBtn = $("#chooseExperienceBtn");
 const chooseChallengeBtn = $("#chooseChallengeBtn");
 const backToModeBtn = $("#backToModeBtn");
 const providerSelect = $("#providerSelect");
-const apiKeyLabel = $("#apiKeyLabel");
-const apiKeyInput = $("#apiKeyInput");
 const modelInput = $("#modelInput");
-const toggleKeyBtn = $("#toggleKeyBtn");
 const providerHint = $("#providerHint");
 const storySettingsSection = $("#storySettingsSection");
 const challengeStatus = $("#challengeStatus");
@@ -393,13 +382,12 @@ const optionList = $("#optionList");
 const applyBtn = $("#applyBtn");
 const cancelBtn = $("#cancelBtn");
 const modalWarning = $("#modalWarning");
-const apiKeyField = apiKeyInput.closest(".field");
 const connectionSection = providerSelect.closest(".pane-section");
 
 const providerDrafts = Object.fromEntries(
   Object.entries(PROVIDERS).map(([id, provider]) => [
     id,
-    { apiKey: "", model: provider.defaultModel }
+    { model: provider.defaultModel }
   ])
 );
 let currentProviderId = DEFAULT_PROVIDER_ID;
@@ -661,8 +649,6 @@ function parseAppSettingsMarkdown(markdown) {
       result.defaultProviderId = normalizeProviderConfig(rawValue);
     } else if (["defaultmodel", "model", "modelid", "endpoint", "endpointid"].includes(rawKey)) {
       result.defaultModel = rawValue || DEFAULT_APP_SETTINGS.defaultModel;
-    } else if (["defaultapikey", "apikey", "api", "key"].includes(rawKey)) {
-      result.defaultApiKey = rawValue || DEFAULT_APP_SETTINGS.defaultApiKey;
     }
   });
   return result;
@@ -686,7 +672,6 @@ function applyAppSettings(settings) {
   appSettings = { ...DEFAULT_APP_SETTINGS, ...(settings || {}) };
   const provider = getProvider(appSettings.defaultProviderId);
   providerDrafts[provider.id] = {
-    apiKey: appSettings.defaultApiKey || "",
     model: appSettings.defaultModel || provider.defaultModel
   };
   if (connectionSection) {
@@ -702,7 +687,6 @@ function getCurrentProvider() {
 function saveProviderInputs(providerId = currentProviderId) {
   const provider = getProvider(providerId);
   providerDrafts[provider.id] = {
-    apiKey: isManagedApiKeyMode() ? "" : apiKeyInput.value,
     model: modelInput.value || provider.defaultModel
   };
 }
@@ -713,12 +697,8 @@ function applyProviderSelection(providerId) {
 
   currentProviderId = provider.id;
   providerSelect.value = provider.id;
-  apiKeyLabel.textContent = provider.apiKeyLabel;
-  apiKeyInput.placeholder = provider.apiKeyPlaceholder;
   modelInput.placeholder = provider.modelPlaceholder;
-  apiKeyInput.value = draft.apiKey || "";
   modelInput.value = draft.model || provider.defaultModel;
-  syncApiKeyControls();
   providerHint.textContent = `${provider.note} ${getConnectionNote()}`;
 }
 
@@ -831,10 +811,6 @@ function normalizeConfigUrl(value) {
   return String(value || "").trim().replace(/\/+$/, "");
 }
 
-function isManagedApiKeyMode() {
-  return APP_CONFIG.managedApiKeys && Boolean(APP_CONFIG.llmProxyUrl);
-}
-
 function getConfiguredProxyEndpoint() {
   if (!APP_CONFIG.llmProxyUrl) return "";
   return APP_CONFIG.llmProxyUrl.endsWith("/api/llm")
@@ -843,20 +819,7 @@ function getConfiguredProxyEndpoint() {
 }
 
 function getLLMProxyEndpoint() {
-  if (shouldUseLocalProxy()) return "/api/llm";
-  return getConfiguredProxyEndpoint();
-}
-
-function syncApiKeyControls() {
-  const isManaged = isManagedApiKeyMode();
-  if (apiKeyField) apiKeyField.hidden = isManaged;
-  toggleKeyBtn.hidden = isManaged;
-  apiKeyInput.disabled = isManaged;
-  if (isManaged) {
-    apiKeyInput.value = "";
-    apiKeyInput.type = "password";
-    toggleKeyBtn.textContent = "显示 Key";
-  }
+  return getConfiguredProxyEndpoint() || (shouldUseLocalProxy() ? "/api/llm" : "");
 }
 
 function isLocalHostname(hostname) {
@@ -875,13 +838,11 @@ function shouldUseLocalProxy() {
 }
 
 function getConnectionNote() {
-  if (isManagedApiKeyMode()) {
-    return "发布版使用托管公共额度，API Key 不会发送到页面或写入发布包。";
-  }
+  if (APP_CONFIG.llmProxyUrl) return "当前页面会请求已配置的后端代理，API Key 只保存在代理服务环境变量中。";
   if (shouldUseLocalProxy()) {
-    return "本地运行时会优先使用本地代理；Key 只用于当前本地会话，不会写入项目文件。";
+    return "本地运行时会请求同源后端代理，API Key 只保存在服务端环境变量中。";
   }
-  return "线上静态版本会从浏览器直连服务商；Key 只用于当前页面会话，不会写入项目文件。";
+  return "当前页面未配置后端代理；请通过本地服务启动，或配置远端代理地址。";
 }
 
 async function getDefaultStoryPrompt(context = getStoryPromptContext()) {
@@ -896,8 +857,6 @@ function isRomanceContext(context) {
 async function callLLM({ schemaName, schema, prompt, temperature = 0.85, maxTokens = 2200, progress = {} }) {
   saveProviderInputs();
   const provider = getCurrentProvider();
-  const managedApiKeys = isManagedApiKeyMode();
-  const apiKey = managedApiKeys ? "" : apiKeyInput.value.trim();
   const model = normalizeModelForProvider(provider, modelInput.value);
   setProgressStep(progress.prepare, `服务商：${provider.name}；模型：${model}`);
   const promptWithSchema = `${prompt}
@@ -924,45 +883,29 @@ ${JSON.stringify(schema, null, 2)}`;
   };
 
   const proxyEndpoint = getLLMProxyEndpoint();
+  if (!proxyEndpoint) {
+    throw new Error("当前页面没有可用的后端代理。请通过 npm run dev / start-local.ps1 启动本地服务，或在 src/config.js 配置 llmProxyUrl。");
+  }
+
   const requestStartedAt = performance.now();
   setProgressStep(progress.request, "请求已发出，正在等待模型返回");
-  let response = null;
-  if (proxyEndpoint) {
-    response = await fetch(proxyEndpoint, {
+  let response = await fetch(proxyEndpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      provider: provider.id,
+      requestBody,
+      schemaName
+    })
+  });
+  if (proxyEndpoint === "/api/llm" && (response.status === 404 || response.status === 405) && provider.id === "siliconflow") {
+    response = await fetch("/api/siliconflow", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        provider: provider.id,
-        apiKey: managedApiKeys ? undefined : apiKey,
-        requestBody,
-        schemaName
-      })
+      body: JSON.stringify({ requestBody, schemaName })
     });
-    if (proxyEndpoint === "/api/llm" && (response.status === 404 || response.status === 405) && provider.id === "siliconflow") {
-      response = await fetch("/api/siliconflow", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiKey, requestBody, schemaName })
-      });
-    } else if (response.status === 404 || response.status === 405) {
-      throw new Error("当前运行中的本地服务还未加载火山方舟代理。请重新运行 start-local.ps1 后再使用火山方舟。");
-    }
-  } else {
-    if (!apiKey) {
-      throw new Error(`请先填写 ${provider.name} API Key，或配置托管代理地址后再发布。`);
-    }
-    try {
-      response = await fetch(provider.chatUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
-        },
-        body: JSON.stringify(requestBody)
-      });
-    } catch (error) {
-      throw new Error(`浏览器无法直接连接 ${provider.name}。itch.io 只能托管静态网页；如果服务商不允许浏览器跨域请求，需要额外部署一个 HTTPS 代理服务。`);
-    }
+  } else if (response.status === 404 || response.status === 405) {
+    throw new Error("当前运行中的后端服务还未加载 LLM 代理。请重新运行 start-local.ps1 或 npm run dev 后再试。");
   }
 
   const requestDuration = performance.now() - requestStartedAt;
@@ -976,7 +919,7 @@ ${JSON.stringify(schema, null, 2)}`;
 
   const outputText = extractOutputText(data);
   if (!outputText) {
-    throw new Error(`没有从 ${provider.name} 响应中读取到文本。请检查 Key、模型名或 Endpoint ID 是否正确。`);
+    throw new Error(`没有从 ${provider.name} 响应中读取到文本。请检查后端 API Key 配置、模型名或 Endpoint ID 是否正确。`);
   }
 
   try {
@@ -1578,7 +1521,7 @@ async function regenerateContinuation(finalizeAfterGenerate) {
       result = createSecretGoodEndingDemoContinuation(pending);
       setProgressStep("parse", "整理彩蛋结局");
       completeProgressStep("parse", "彩蛋结局已生成");
-    } else if (state.demoMode && !apiKeyInput.value.trim()) {
+    } else if (state.demoMode) {
       setProgressStep("prepare", `改动从特殊情节第 ${pending.startIndex + 1} 段之后生效`);
       setProgressStep("request", "示例模式正在本地生成后续");
       result = secretGoodEnding
@@ -2533,17 +2476,10 @@ providerSelect.addEventListener("change", () => {
   clearError();
 });
 
-apiKeyInput.addEventListener("input", () => saveProviderInputs());
 modelInput.addEventListener("input", () => saveProviderInputs());
 worldviewSelect.addEventListener("change", clearError);
 storyThemeSelect.addEventListener("change", clearError);
 motifInput.addEventListener("input", clearError);
-
-toggleKeyBtn.addEventListener("click", () => {
-  const isPassword = apiKeyInput.type === "password";
-  apiKeyInput.type = isPassword ? "text" : "password";
-  toggleKeyBtn.textContent = isPassword ? "隐藏 Key" : "显示 Key";
-});
 
 modalMask.addEventListener("click", event => {
   if (event.target === modalMask) closeModal();

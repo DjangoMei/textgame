@@ -1,6 +1,5 @@
 param(
-  [string]$ProxyUrl = $env:ITCH_LLM_PROXY_URL,
-  [switch]$ManagedApiKeys
+  [string]$ProxyUrl = $env:ITCH_LLM_PROXY_URL
 )
 
 $ErrorActionPreference = "Stop"
@@ -37,13 +36,6 @@ Assert-PathInsideProject $zipPath
 New-Item -ItemType Directory -Force -Path $distDir | Out-Null
 
 $normalizedProxyUrl = ([string]$ProxyUrl).Trim().TrimEnd("/")
-if ($normalizedProxyUrl) {
-  $ManagedApiKeys = $true
-}
-
-if ($ManagedApiKeys -and -not $normalizedProxyUrl) {
-  throw "Managed API key mode requires -ProxyUrl or ITCH_LLM_PROXY_URL."
-}
 
 if (Test-Path $zipPath) {
   $resolvedZipPath = (Resolve-Path $zipPath).Path
@@ -76,7 +68,6 @@ try {
 
   $configJson = @{
     llmProxyUrl = $normalizedProxyUrl
-    managedApiKeys = [bool]$ManagedApiKeys
   } | ConvertTo-Json -Compress
   Add-ZipTextEntry $zip "src/config.js" "window.ENDLESS_STORY_CONFIG = $configJson;"
 }

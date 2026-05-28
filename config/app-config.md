@@ -10,6 +10,3 @@ defaultProvider: volcengine
 
 # 默认模型或 Endpoint ID。
 defaultModel: ep-20260522175712-qq28w
-
-# 默认 API Key。
-defaultApiKey:

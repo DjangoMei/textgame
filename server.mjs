@@ -79,12 +79,11 @@ async function handleLLMProxy(request, response, forcedProviderId = "") {
     return;
   }
 
-  const managedApiKey = getProviderApiKey(provider);
-  const apiKey = managedApiKey || payload.apiKey;
+  const apiKey = getProviderApiKey(provider);
   const requestBody = sanitizeRequestBody(payload.requestBody);
 
   if (!apiKey) {
-    sendJson(response, 400, { error: { message: `请先填写 ${provider.name} API Key，或设置 ${provider.envKeys.join(" / ")} 环境变量。` } }, corsHeaders);
+    sendJson(response, 500, { error: { message: `服务端未配置 ${provider.name} API Key。请设置 ${provider.envKeys.join(" / ")} 环境变量后重启服务。` } }, corsHeaders);
     return;
   }
 
@@ -93,17 +92,15 @@ async function handleLLMProxy(request, response, forcedProviderId = "") {
     return;
   }
 
-  if (managedApiKey) {
-    const quota = await consumeDailyQuota(providerId);
-    if (!quota.allowed) {
-      sendJson(response, 429, {
-        error: {
-          message: `${provider.name} 今日公共额度已用完，请明天再试。`
-        },
-        quota
-      }, corsHeaders);
-      return;
-    }
+  const quota = await consumeDailyQuota(providerId);
+  if (!quota.allowed) {
+    sendJson(response, 429, {
+      error: {
+        message: `${provider.name} 今日公共额度已用完，请明天再试。`
+      },
+      quota
+    }, corsHeaders);
+    return;
   }
 
   const upstream = await fetch(provider.chatUrl, {

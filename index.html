@@ -52,19 +52,11 @@
           </label>
 
           <label class="field">
-            <span id="apiKeyLabel">火山方舟 API Key</span>
-            <input id="apiKeyInput" type="password" autocomplete="off" placeholder="ARK_API_KEY" />
+            <span>模型 / Endpoint ID</span>
+            <input id="modelInput" type="text" value="MiniMaxAI/MiniMax-M2.5" />
           </label>
 
-          <div class="split-fields">
-            <label class="field">
-              <span>模型 / Endpoint ID</span>
-              <input id="modelInput" type="text" value="MiniMaxAI/MiniMax-M2.5" />
-            </label>
-            <button id="toggleKeyBtn" class="button ghost" type="button">显示 Key</button>
-          </div>
-
-          <p id="providerHint" class="note">Key 只用于当前本地会话，不会写入项目文件。</p>
+          <p id="providerHint" class="note">API Key 由后端环境变量管理，前端不会读取或发送 Key。</p>
         </section>
 
         <section id="storySettingsSection" class="pane-section">

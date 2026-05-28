@@ -286,7 +286,7 @@ async function buildInitialStoryPrompt(context) {
   return `${renderPromptTemplate(storyBase, context)}\n\n${renderPromptTemplate(returnRules, values)}\n\n${renderPromptTemplate(romanceRules, values)}`.trim();
 }
 
-async function callLLM({ providerId, apiKey, model, schemaName, schema, prompt, temperature = 0.72, maxTokens = 2400 }) {
+async function callLLM({ providerId, model, schemaName, schema, prompt, temperature = 0.72, maxTokens = 2400 }) {
   const promptWithSchema = `${prompt}
 
 只输出一个 JSON 对象，不要 Markdown，不要解释。必须符合结构：
@@ -313,7 +313,7 @@ ${JSON.stringify(schema, null, 2)}`;
   const response = await fetch(`${apiBaseUrl}/api/llm`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ provider: providerId, apiKey, requestBody, schemaName })
+    body: JSON.stringify({ provider: providerId, requestBody, schemaName })
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -687,7 +687,6 @@ async function repairStoryLengthPayload(payload, config) {
 
   return callLLM({
     providerId: "volcengine",
-    apiKey: config.defaultApiKey,
     model: config.defaultModel,
     schemaName: "segmented_story",
     schema: storySchema,
@@ -719,7 +718,6 @@ async function generateOne(index, config, plan) {
       const prompt = await buildInitialStoryPrompt(context);
       const raw = await callLLM({
         providerId: "volcengine",
-        apiKey: config.defaultApiKey,
         model: config.defaultModel,
         schemaName: "segmented_story",
         schema: storySchema,
@@ -771,8 +769,8 @@ async function main() {
   if (config.defaultProvider !== "volcengine") {
     console.log(`当前默认服务商是 ${config.defaultProvider}，本次仍按请求使用 volcengine。`);
   }
-  if (!config.defaultApiKey || !config.defaultModel) {
-    throw new Error("缺少 defaultApiKey 或 defaultModel。");
+  if (!config.defaultModel) {
+    throw new Error("缺少 defaultModel。API Key 请配置到后端服务环境变量。");
   }
 
   await mkdir(outputDir, { recursive: true });
