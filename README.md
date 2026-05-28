@@ -66,6 +66,30 @@ $env:HOST="0.0.0.0"
 
 这些限制保护的是代理服务的公共额度。为了更稳，还建议在火山方舟和 SiliconFlow 控制台设置硬性消费上限或余额告警。
 
+## 个人域名部署
+
+当前本机通过个人主页静态目录和 Cloudflare Tunnel 暴露生产入口：
+
+```text
+https://djangomei.com/textgame/
+```
+
+本地后台服务由 LaunchAgent `com.djangomei.textgame` 运行，实际部署目录是：
+
+```text
+/Users/djangomei/textgame-service
+```
+
+Cloudflare Tunnel `djangomei-homepage` 会把 `api.djangomei.com/api/llm` 转发到 `http://127.0.0.1:4173`，同一个 `api.djangomei.com` 根入口仍保留给既有游戏服务。开发仓库更新后，同步部署目录并重启服务：
+
+```bash
+./scripts/sync-local-deploy.sh
+./scripts/sync-homepage-static.sh
+launchctl kickstart -k gui/$(id -u)/com.djangomei.textgame
+```
+
+生产服务会读取部署目录中的 `.env`。如果需要启用真实模型请求，在 `/Users/djangomei/textgame-service/.env` 写入 `ARK_API_KEY` 或 `SILICONFLOW_API_KEY` 后重启服务；不要把 `.env` 提交进 Git。个人主页中的静态前端会通过 `https://api.djangomei.com/api/llm` 调用后端代理。
+
 ## 发布到 itch.io
 
 itch.io 的 HTML5 上传包只能运行静态网页文件，不能运行本项目里的 `server.mjs` 本地代理。线上版本必须配置一个可公开访问的 HTTPS 后端代理：
