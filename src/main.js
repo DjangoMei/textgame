@@ -329,6 +329,8 @@ const state = {
 const $ = selector => document.querySelector(selector);
 
 const modeScreen = $("#modeScreen");
+const appViewport = $("#appViewport");
+const appScaleStage = $("#appScaleStage");
 const appShell = $("#appShell");
 const chooseExperienceBtn = $("#chooseExperienceBtn");
 const chooseChallengeBtn = $("#chooseChallengeBtn");
@@ -394,6 +396,11 @@ let currentProviderId = DEFAULT_PROVIDER_ID;
 let appSettings = { ...DEFAULT_APP_SETTINGS };
 const iconPickers = [];
 
+const APP_DESIGN_WIDTH = 1220;
+const APP_COMPACT_WIDTH = 720;
+let appScaleFrame = null;
+let appScaleObserver = null;
+
 const progressState = {
   active: false,
   status: "idle",
@@ -404,6 +411,41 @@ const progressState = {
   finishedAt: 0,
   timerId: null
 };
+
+function scheduleAppScale() {
+  if (appScaleFrame) window.cancelAnimationFrame(appScaleFrame);
+  appScaleFrame = window.requestAnimationFrame(applyAppScale);
+}
+
+function applyAppScale() {
+  appScaleFrame = null;
+  if (!appViewport || !appScaleStage || !appShell || appViewport.hidden || appShell.hidden) return;
+
+  const availableWidth = Math.max(320, Math.floor(appViewport.clientWidth || window.innerWidth));
+  const compact = availableWidth < APP_COMPACT_WIDTH;
+  const scale = compact ? 1 : Math.min(1, availableWidth / APP_DESIGN_WIDTH);
+  const logicalWidth = compact ? availableWidth : Math.max(availableWidth, APP_DESIGN_WIDTH);
+
+  appViewport.classList.toggle("app-compact-scale", compact);
+  appViewport.style.setProperty("--app-ui-scale", scale.toFixed(4));
+  appViewport.style.setProperty("--app-logical-width", `${logicalWidth}px`);
+  appViewport.style.setProperty("--app-stage-width", `${Math.ceil(logicalWidth * scale)}px`);
+
+  const measuredHeight = appShell.scrollHeight || appShell.offsetHeight || window.innerHeight;
+  appViewport.style.setProperty("--app-stage-height", `${Math.ceil(measuredHeight * scale)}px`);
+}
+
+function initAppScale() {
+  if (!appViewport) return;
+  if (appScaleObserver) appScaleObserver.disconnect();
+  if (typeof ResizeObserver === "function") {
+    appScaleObserver = new ResizeObserver(scheduleAppScale);
+    appScaleObserver.observe(appViewport);
+  }
+  window.addEventListener("resize", scheduleAppScale, { passive: true });
+  window.addEventListener("orientationchange", scheduleAppScale, { passive: true });
+  scheduleAppScale();
+}
 
 function startProgress(title, steps) {
   stopProgressTimer();
@@ -531,6 +573,7 @@ function updateProgressUI() {
   progressCurrent.textContent = currentText;
   progressPercent.textContent = `${percent}%`;
   progressSteps.innerHTML = progressState.steps.map(step => renderProgressStep(step, now)).join("");
+  scheduleAppScale();
 }
 
 function renderProgressStep(step, now) {
@@ -1196,15 +1239,18 @@ function enterGameMode(mode) {
     state.challengeFinished = false;
   }
   modeScreen.hidden = true;
+  if (appViewport) appViewport.hidden = false;
   appShell.hidden = false;
   clearError();
   hideEnding();
   updateUI();
+  scheduleAppScale();
 }
 
 function returnToModeScreen() {
   modeScreen.hidden = false;
   appShell.hidden = true;
+  if (appViewport) appViewport.hidden = true;
   closeModal();
   clearError();
   hideEnding();
@@ -1696,6 +1742,7 @@ function renderStory() {
     empty.className = "empty-story";
     empty.textContent = "选择世界观和故事主题，填写或留空核心要素，然后生成新故事。";
     storyEl.append(empty);
+    scheduleAppScale();
     return;
   }
 
@@ -1774,6 +1821,7 @@ function renderStory() {
   } else {
     appendEndingText(storyEl, state.suffixText, state.endingType);
   }
+  scheduleAppScale();
 }
 
 function appendPlainTextParagraphs(container, text, className) {
@@ -1886,6 +1934,7 @@ function updateUI() {
     logListEl.innerHTML = state.editableParts.length
       ? "<li>还没有改写。</li>"
       : "<li>还没有故事。</li>";
+    scheduleAppScale();
     return;
   }
 
@@ -1893,6 +1942,7 @@ function updateUI() {
     const affectedText = change.affectedCount > 1 ? `（同步影响 ${change.affectedCount} 处）` : "";
     return `<li>${getTypeName(change.type)}：${escapeHTML(change.oldValue)} -> ${escapeHTML(change.newValue)}${affectedText}</li>`;
   }).join("");
+  scheduleAppScale();
 }
 
 function setBusy(value, text = "AI 正在写作...") {
@@ -1911,6 +1961,7 @@ function showFinalStory(summary) {
   endingTextEl.textContent = `${state.endingJudgement || meta.defaultText}${summary ? ` ${summary}` : ""}`;
   endingPanel.className = `ending ${meta.className}`;
   endingPanel.classList.add("show");
+  scheduleAppScale();
   endingPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
@@ -1930,6 +1981,7 @@ function hideEnding() {
   finalTitleEl.textContent = "最终故事";
   finalStoryEl.textContent = "";
   endingTextEl.textContent = "";
+  scheduleAppScale();
 }
 
 function normalizeStoryPayload(payload) {
@@ -2493,5 +2545,6 @@ const initialProviderId = applyAppSettings(await loadAppSettings());
 applyProviderSelection(initialProviderId);
 setupIconPicker(worldviewSelect, SETTING_WORLDVIEW_OPTIONS, UI_ASSETS.worldviews, "选择世界观");
 setupIconPicker(storyThemeSelect, STORY_THEME_OPTIONS, UI_ASSETS.themes, "选择故事主题");
+initAppScale();
 renderStory();
 updateUI();

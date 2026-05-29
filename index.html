@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>无尽故事实验室</title>
-  <link rel="stylesheet" href="./src/styles.css" />
+  <link rel="stylesheet" href="./src/styles.css?v=20260529-scale-ui" />
 </head>
 <body>
   <section id="modeScreen" class="mode-screen" aria-labelledby="modeTitle">
@@ -25,21 +25,23 @@
     </div>
   </section>
 
-  <div id="appShell" class="app-shell" hidden>
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Bad Ending Rescue</p>
-        <h1>无尽故事实验室</h1>
-      </div>
-      <button id="backToModeBtn" class="button ghost topbar-back" type="button">返回模式选择</button>
-      <div class="topbar-intro" aria-label="玩法介绍">
-        <p>选择世界观、故事主题和核心意象，开启一段注定滑向坏结局的剧本。</p>
-        <p>找到被标记的关键台词，用你的改写撬动后续命运。</p>
-        <p>好结局才算真正通关；坏结局与中立结局都还需要继续尝试。</p>
-      </div>
-    </header>
+  <div id="appViewport" class="app-viewport" hidden>
+    <div id="appScaleStage" class="app-scale-stage">
+      <div id="appShell" class="app-shell">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Bad Ending Rescue</p>
+            <h1>无尽故事实验室</h1>
+          </div>
+          <button id="backToModeBtn" class="button ghost topbar-back" type="button">返回模式选择</button>
+          <div class="topbar-intro" aria-label="玩法介绍">
+            <p>选择世界观、故事主题和核心意象，开启一段注定滑向坏结局的剧本。</p>
+            <p>找到被标记的关键台词，用你的改写撬动后续命运。</p>
+            <p>好结局才算真正通关；坏结局与中立结局都还需要继续尝试。</p>
+          </div>
+        </header>
 
-    <main class="workspace">
+        <main class="workspace">
       <aside class="control-pane">
         <section class="pane-section">
           <h2>连接</h2>
@@ -182,7 +184,9 @@
           <p id="endingText" class="ending-note"></p>
         </section>
       </section>
-    </main>
+        </main>
+      </div>
+    </div>
   </div>
 
   <div id="modalMask" class="modal-mask" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -198,7 +202,7 @@
     </div>
   </div>
 
-  <script src="./src/config.js?v=20260525-image-ui"></script>
-  <script type="module" src="./src/main.js?v=20260525-image-ui"></script>
+  <script src="./src/config.js?v=20260529-scale-ui"></script>
+  <script type="module" src="./src/main.js?v=20260529-scale-ui"></script>
 </body>
 </html>
